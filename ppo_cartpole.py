@@ -251,8 +251,7 @@ for epoch in range(epochs):
             env.render()
 
         # Get the logits, action, and take one step in the environment
-        observation = observation.reshape(1, -1)
-        _action = ppo.get_action(observation)
+        _action = ppo.get_action(observation.reshape(1, -1))
         observation_new, reward, done, _ = env.step(_action)
 
         # Store the transition
