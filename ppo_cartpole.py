@@ -55,18 +55,20 @@ For this example the following libraries are used:
 3. `gym` for getting everything we need about the environment
 4. `scipy.signal` for calculating the discounted cumulative sums of vectors
 """
-import numpy as np
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-import gym
-import scipy.signal
 
 """
 ## Functions and class
 """
 
 
+
+
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+import gym
+import scipy.signal
 class PPO:
     def __init__(self, observation_dimensions, hidden_sizes, num_actions, policy_learning_rate, value_function_learning_rate, steps_per_epoch, train_policy_iterations, train_value_iterations, target_kl, clip_ratio):
         # Hyperparameters
@@ -283,7 +285,7 @@ target_kl = 0.01
 hidden_sizes = (64, 64)
 
 # True if you want to render the environment
-render = True
+render = False
 
 """
 ## Initializations
@@ -295,8 +297,10 @@ env = gym.make("CartPole-v0")
 observation_dimensions = env.observation_space.shape[0]
 num_actions = env.action_space.n
 
-# Initialize the observation
+# Initialize the observation, episode return and episode length
 observation = env.reset()
+episode_return = 0
+episode_length = 0
 
 # Initialize the PPO class
 ppo = PPO(observation_dimensions, hidden_sizes, num_actions, policy_learning_rate, value_function_learning_rate,
@@ -307,6 +311,11 @@ ppo = PPO(observation_dimensions, hidden_sizes, num_actions, policy_learning_rat
 """
 # Iterate over the number of epochs
 for epoch in range(epochs):
+    # Initialize the sum of the returns, lengths and number of episodes for each epoch
+    sum_return = 0
+    sum_length = 0
+    num_episodes = 0
+
     # Iterate over the steps of each epoch
     for step in range(steps_per_epoch):
         if render:
@@ -315,6 +324,8 @@ for epoch in range(epochs):
         # Get the logits, action, and take one step in the environment
         _action = ppo.get_action(observation.reshape(1, -1))
         observation_new, reward, done, _ = env.step(_action)
+        episode_return += reward
+        episode_length += 1
 
         # Store the transition
         ppo.store(reward)
@@ -325,6 +336,16 @@ for epoch in range(epochs):
         # If the episode is done, reset the environment
         if done or (step == steps_per_epoch - 1):
             ppo.finish_epoch(done, observation.reshape(1, -1))
+            sum_return += episode_return
+            sum_length += episode_length
+            num_episodes += 1
             observation_new = env.reset()
+            episode_return = 0
+            episode_length = 0
 
     ppo.train()
+
+    # Print mean return and length for each epoch
+    print(
+        f" Epoch: {epoch + 1}. Mean Return: {sum_return / num_episodes}. Mean Length: {sum_length / num_episodes}"
+    )
