@@ -92,7 +92,7 @@ episode_return = 0
 episode_length = 0
 
 # Initialize the PPO class
-ppo = Proximal_Policy_Optimization.PPO(observation_dimensions, hidden_sizes, num_actions, policy_learning_rate, value_function_learning_rate,
+ppo = Proximal_Policy_Optimization.make(observation_dimensions, hidden_sizes, num_actions, policy_learning_rate, value_function_learning_rate,
                                        steps_per_epoch, train_policy_iterations, train_value_iterations, target_kl, clip_ratio)
 
 """
@@ -111,8 +111,8 @@ for epoch in range(epochs):
             env.render()
 
         # Get the logits, action, and take one step in the environment
-        _action = ppo.get_action(observation.reshape(1, -1))
-        observation_new, reward, done, _ = env.step(_action)
+        action = ppo.get_action(observation.reshape(1, -1))
+        observation_new, reward, done, _ = env.step(action)
         episode_return += reward
         episode_length += 1
 
@@ -128,7 +128,7 @@ for epoch in range(epochs):
             sum_return += episode_return
             sum_length += episode_length
             num_episodes += 1
-            observation_new = env.reset()
+            observation = env.reset()
             episode_return = 0
             episode_length = 0
 

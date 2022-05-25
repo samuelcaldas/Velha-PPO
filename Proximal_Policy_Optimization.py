@@ -15,7 +15,7 @@ import numpy as np
 import scipy.signal
 
 
-class PPO:
+class make:
     def __init__(self, observation_dimensions, hidden_sizes, num_actions, policy_learning_rate, value_function_learning_rate, steps_per_epoch, train_policy_iterations, train_value_iterations, target_kl, clip_ratio):
         # Hyperparameters
         self.observation_dimensions = observation_dimensions

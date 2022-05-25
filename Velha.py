@@ -1,10 +1,12 @@
-class Velha:
+class make:
     def __init__(self) -> None:
         self.tabuleiro = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-        self.jogador = 1
+        self.player = 1
         self.score = [0, 0]
+        self.observation_space = (3, 3)
+        self.action_space = 2
 
-    def desenhaTabuleiro(self):
+    def render(self):
         print(" ")
         print(" %s | %s | %s " %
               (self.tabuleiro[0][0], self.tabuleiro[0][1], self.tabuleiro[0][2]))
@@ -50,22 +52,22 @@ class Velha:
 
     def gravaPosicao(self, x, y):
         if(self.tabuleiro[x][y] == 0):
-            self.tabuleiro[x][y] = self.jogador
+            self.tabuleiro[x][y] = self.player
             return True
         else:
             return False
 
     def trocaJogador(self):
-        if(self.jogador == 1):
-            self.jogador = 2
+        if(self.player == 1):
+            self.player = 2
         else:
-            self.jogador = 1
+            self.player = 1
 
     def limpaJogador(self):
-        self.jogador = 1
+        self.player = 1
 
     def incrementaScore(self, jogador):
-        self.score[self.jogador-1] = +1
+        self.score[self.player-1] = +1
 
     def limpaScore(self):
         self.score = [0, 0]
@@ -93,7 +95,23 @@ class Velha:
         self.limpaTabuleiro()
         self.limpaJogador()
 
-    def reset(self):
+    def restart(self):
         self.limpaTabuleiro()
         self.limpaJogador()
         self.limpaScore()
+
+    # Take an action and return the next state, reward, and done flag
+    def step(self, action):
+        x = action[0]
+        y = action[1]
+        winner = self.jogar(x, y)
+        if (winner == 0):
+            return self.tabuleiro, 0, False, None
+        elif (winner == -1):
+            return self.tabuleiro, -1, True, None
+        else:
+            return self.tabuleiro, 1, True, winner
+
+    def reset(self):
+        self.novoJogo()
+        return self.tabuleiro
