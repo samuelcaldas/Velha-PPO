@@ -15,21 +15,25 @@ import Buffer
 
 
 class make:
-    def __init__(self, observation_dimensions, hidden_sizes, num_actions, policy_learning_rate, value_function_learning_rate, steps_per_epoch, train_policy_iterations, train_value_iterations, target_kl, clip_ratio):
+    def __init__(
+        self,
+        observation_dimensions,
+        hidden_sizes,
+        num_actions,
+        policy_learning_rate,
+        value_function_learning_rate,
+        steps_per_epoch,
+
+    ):
         # Hyperparameters
-        self.observation_dimensions = observation_dimensions
         self.num_actions = num_actions
-        self.train_policy_iterations = train_policy_iterations
-        self.train_value_iterations = train_value_iterations
-        self.target_kl = target_kl
-        self.clip_ratio = clip_ratio
 
         # Initialize the buffer
-        self.buffer = Buffer.make(self.observation_dimensions, steps_per_epoch)
+        self.buffer = Buffer.make(observation_dimensions, steps_per_epoch)
 
         # Initialize the actor and the critic as keras models
         observation_input = keras.Input(
-            shape=self.observation_dimensions, dtype=tf.float32)
+            shape=observation_dimensions, dtype=tf.float32)
         logits = self.build_feedforward_neural_network(
             observation_input, list(hidden_sizes) + [self.num_actions], tf.tanh, None)
         self.actor = keras.Model(inputs=observation_input, outputs=logits)
@@ -39,11 +43,19 @@ class make:
 
         # Initialize the policy and the value function optimizers
         self.policy_optimizer = keras.optimizers.Adam(
-            learning_rate=policy_learning_rate)
+            learning_rate=policy_learning_rate
+        )
         self.value_optimizer = keras.optimizers.Adam(
-            learning_rate=value_function_learning_rate)
+            learning_rate=value_function_learning_rate
+        )
 
-    def build_feedforward_neural_network(self, layer, sizes, activation=tf.tanh, output_activation=None):
+    def build_feedforward_neural_network(
+        self,
+        layer,
+        sizes,
+        activation=tf.tanh,
+        output_activation=None
+    ):
         # Build a feedforward neural network
         for size in sizes[:-1]:
             layer = layers.Dense(units=size, activation=activation)(layer)
@@ -71,8 +83,13 @@ class make:
     def store(self, reward):
         # Store the observtion, action, reward, value and the log-probability of the action
         self.reward = reward
-        self.buffer.store(self.observation, self.action,
-                          self.reward, self.value_step, self.logprobability_step)
+        self.buffer.store(
+            self.observation,
+            self.action,
+            self.reward,
+            self.value_step,
+            self.logprobability_step
+        )
 
     def finish_epoch(self, done, observation):
         # Finish an epoch
@@ -86,7 +103,12 @@ class make:
     # Train the policy by maxizing the PPO-Clip objective:
     @tf.function
     def train_policy(
-        self, observation_buffer, action_buffer, logprobability_buffer, advantage_buffer
+        self,
+        observation_buffer,
+        action_buffer,
+        logprobability_buffer,
+        advantage_buffer,
+        clip_ratio
     ):
 
         with tf.GradientTape() as tape:  # Record operations for automatic differentiation.
@@ -97,8 +119,8 @@ class make:
             )
             min_advantage = tf.where(
                 advantage_buffer > 0,
-                (1 + self.clip_ratio) * advantage_buffer,
-                (1 - self.clip_ratio) * advantage_buffer,
+                (1 + clip_ratio) * advantage_buffer,
+                (1 - clip_ratio) * advantage_buffer,
             )
 
             policy_loss = -tf.reduce_mean(
@@ -127,8 +149,14 @@ class make:
         self.value_optimizer.apply_gradients(
             zip(value_grads, self.critic.trainable_variables))
 
-    def train(self):
-        # Train the model
+    def train(
+        self,
+        train_policy_iterations,
+        train_value_iterations,
+        target_kl,
+        clip_ratio
+    ):
+        # Train the policy and the value function
 
         # Get values from the buffer
         (
@@ -140,13 +168,18 @@ class make:
         ) = self.buffer.get()
 
         # Update the policy and implement early stopping using KL divergence
-        for _ in range(self.train_policy_iterations):
+        for _ in range(train_policy_iterations):
             kl = self.train_policy(
-                observation_buffer, action_buffer, logprobability_buffer, advantage_buffer)
-            if kl > 1.5 * self.target_kl:
+                observation_buffer,
+                action_buffer,
+                logprobability_buffer,
+                advantage_buffer,
+                clip_ratio
+            )
+            if kl > 1.5 * target_kl:
                 # Early Stopping
                 break
 
         # Update the value function
-        for _ in range(self.train_value_iterations):
+        for _ in range(train_value_iterations):
             self.train_value_function(observation_buffer, return_buffer)

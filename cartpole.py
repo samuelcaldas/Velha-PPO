@@ -83,7 +83,7 @@ render = False
 # Initialize the environment and get the dimensionality of the
 # observation space and the number of possible actions
 env = gym.make("CartPole-v0")
-observation_dimensions = env.observation_space.shape[0]
+observation_dimensions = env.observation_space.shape
 num_actions = env.action_space.n
 
 # Initialize the observation, episode return and episode length
@@ -92,8 +92,14 @@ episode_return = 0
 episode_length = 0
 
 # Initialize the PPO class
-ppo = Proximal_Policy_Optimization.make(observation_dimensions, hidden_sizes, num_actions, policy_learning_rate, value_function_learning_rate,
-                                       steps_per_epoch, train_policy_iterations, train_value_iterations, target_kl, clip_ratio)
+ppo = Proximal_Policy_Optimization.make(
+    observation_dimensions,
+    hidden_sizes,
+    num_actions,
+    policy_learning_rate,
+    value_function_learning_rate,
+    steps_per_epoch
+)
 
 """
 ## Run
@@ -132,7 +138,12 @@ for epoch in range(epochs):
             episode_return = 0
             episode_length = 0
 
-    ppo.train()
+    ppo.train(
+        train_policy_iterations=train_policy_iterations,
+        train_value_iterations=train_value_iterations,
+        target_kl=target_kl,
+        clip_ratio=clip_ratio,
+    )
 
     # Print mean return and length for each epoch
     print(

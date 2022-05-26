@@ -7,7 +7,7 @@ class make:
     def __init__(self, observation_dimensions, size, gamma=0.99, lam=0.95):
         # Buffer initialization
         self.observation_buffer = np.zeros(
-            (size, observation_dimensions), dtype=np.float32
+            [size]+ list(observation_dimensions), dtype=np.float32
         )
         self.action_buffer = np.zeros(size, dtype=np.int32)
         self.advantage_buffer = np.zeros(size, dtype=np.float32)
