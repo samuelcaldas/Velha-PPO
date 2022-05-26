@@ -1,4 +1,4 @@
-import velha
+import tictactoe
 import Proximal_Policy_Optimization
 
 
@@ -11,8 +11,8 @@ def main():
     """
     # Initialize the environment and get the dimensionality of the
     # observation space and the number of possible actions
-    env = velha.make()
-    observation_dimensions = env.observation_space
+    env = tictactoe.make()
+    observation_dimensions = env.observation_space.shape
     num_actions = env.action_space
 
     # Initialize the observation, episode return and episode length
